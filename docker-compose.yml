@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+
+  # ─── Base de datos MySQL ───────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: gantelella_db
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: gantelella
+      MYSQL_USER: gantelella_user
+      MYSQL_PASSWORD: gantelella_pass
+    ports:
+      - "3306:3306"          # opcional: exponer para conectarse con un cliente externo
+    volumes:
+      - db_data:/var/lib/mysql          # persistencia de datos
+      - ./backup.sql:/docker-entrypoint-initdb.d/backup.sql  # carga el schema al iniciar
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Aplicación Node.js ────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gantelella_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      MYSQL_HOST: db              # nombre del servicio de BD en la red interna
+      MYSQL_USER: gantelella_user
+      MYSQL_PASSWORD: gantelella_pass
+      MYSQL_DATABASE: gantelella
+    depends_on:
+      db:
+        condition: service_healthy  # espera a que MySQL esté listo antes de arrancar
+    volumes:
+      - .:/app                    # hot-reload: cambios en código se reflejan de inmediato
+      - /app/node_modules         # evita que el volumen anterior sobreescriba node_modules
+
+volumes:
+  db_data:
