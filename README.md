@@ -1,26 +1,71 @@
-# NodeGentelella
+# Node Gentelella CRUD Generator
 
-[ExpressJs](https://expressjs.com/) framework with [Gentelella](https://colorlib.com/polygon/gentelella/index.html) template.
+## Ambientes Disponibles
 
-## Getting Started
+### Desarrollo
 
-- Check database settings ( /vendor/constants.js )
-- Import data base ( /backup.sql )
-- Ejecute project ( optional for windows: run /start.bat )
-
-## Tools
-
-- Generate automatic crud ( [your ip]:[your port]/crud )
-
-With this tool you can generate an automatic CRUD from a table with diferents data types.
-
-## Installed packages
-
+```bash
+docker compose \
+--env-file .env.dev \
+-f docker-compose.dev.yml up -d
 ```
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php -r "if (hash_file('sha384', 'composer-setup.php') === '48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-php composer-setup.php
-php -r "unlink('composer-setup.php');"
 
-php composer.phar require chrmorandi/yii2-jasper
+### Producción
+
+```bash
+docker compose \
+--env-file .env.prod \
+-f docker-compose.prod.yml up -d
 ```
+
+---
+
+## Detener ambiente
+
+Desarrollo
+
+```bash
+docker compose \
+--env-file .env.dev \
+-f docker-compose.dev.yml down
+```
+
+Producción
+
+```bash
+docker compose \
+--env-file .env.prod \
+-f docker-compose.prod.yml down
+```
+
+---
+
+## Reconstruir imágenes
+
+```bash
+docker compose \
+--env-file .env.dev \
+-f docker-compose.dev.yml up -d --build
+```
+
+---
+
+## Estructura
+
+- Dockerfile → Producción
+- Dockerfile.dev → Desarrollo
+- .env.dev → Variables desarrollo
+- .env.prod → Variables producción
+- docker-compose.dev.yml → Orquestación desarrollo
+- docker-compose.prod.yml → Orquestación producción
+- crudWatcher.js → Detección automática de nuevos CRUDs
+
+---
+
+## Flujo CRUD Dinámico
+
+1. Crear tabla en MySQL.
+2. Ejecutar generador CRUD.
+3. Se crean controladores, vistas y rutas.
+4. crudWatcher detecta los cambios.
+5. Las rutas quedan disponibles sin reiniciar Node.

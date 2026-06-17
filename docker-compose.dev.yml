@@ -1,0 +1,72 @@
+# =========================================================
+# Ambiente de Desarrollo
+#
+# Servicios:
+# - MySQL
+# - NodeJS
+#
+# Características:
+# - Hot Reload mediante Nodemon
+# - Base de datos independiente
+# - Network independiente
+# =========================================================
+
+services:
+
+  db:
+    image: mysql:8.0
+    container_name: ${DB_CONTAINER_NAME}
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+    ports:
+      - "${MYSQL_PORT}:3306"
+
+    volumes:
+      - db_dev_data:/var/lib/mysql
+      # Respaldo original
+      - ${BACKUP_SQL}:/tmp/backup.sql
+      # Script de inicialización
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+
+    networks:
+      - dev_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+
+    container_name: ${APP_CONTAINER_NAME}
+
+    ports:
+      - "${APP_PORT}:${NODE_PORT}"
+
+    environment:
+      PORT: ${NODE_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+
+    depends_on:
+      - db
+
+    # Permite sincronizar cambios locales
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+    networks:
+      - dev_network
+
+networks:
+  dev_network:
+    name: ${NETWORK_NAME}
+
+volumes:
+  db_dev_data:

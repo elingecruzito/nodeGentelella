@@ -1,0 +1,28 @@
+# ---------------------------------------------------------
+# Dockerfile de Desarrollo
+#
+# Objetivo:
+# Crear una imagen orientada al desarrollo local.
+#
+# Características:
+# - Instala dependencias de desarrollo.
+# - Permite uso de nodemon.
+# - Recarga automática ante cambios.
+# ---------------------------------------------------------
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Instala dependencias productivas y de desarrollo
+RUN npm install
+
+RUN npm install -g nodemon
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm","run","dev"]

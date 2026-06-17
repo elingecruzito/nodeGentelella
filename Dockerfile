@@ -1,20 +1,31 @@
-# Etapa de construcción
+# ---------------------------------------------------------
+# Dockerfile de Producción
+#
+# Objetivo:
+# Construir una imagen optimizada para ambientes productivos.
+#
+# Características:
+# - Instala únicamente dependencias necesarias.
+# - No incluye herramientas de desarrollo.
+# - Ejecuta la aplicación mediante npm start.
+# ---------------------------------------------------------
+
 FROM node:18-alpine
 
 # Directorio de trabajo dentro del contenedor
 WORKDIR /app
 
-# Copiar archivos de dependencias primero (mejor uso de caché de Docker)
+# Copiar archivos de dependencias
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm install
+# Instalar únicamente dependencias productivas
+RUN npm install --production
 
-# Copiar el resto del código fuente
+# Copiar código fuente
 COPY . .
 
-# Exponer el puerto en que corre la app (definido en bin/www)
+# Puerto utilizado por la aplicación
 EXPOSE 3000
 
-# Comando para iniciar la aplicación
-CMD ["npm", "start"]
+# Comando de arranque
+CMD ["npm","start"]
