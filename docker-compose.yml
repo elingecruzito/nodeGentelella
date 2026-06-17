@@ -1,50 +1,65 @@
-version: '3.8'
 services:
-  # ─── Base de datos MySQL ───────────────────────────────────────────
   db:
     image: mysql:8.0
-    container_name: gantelella_db
+    container_name: ${DB_CONTAINER_NAME}
     restart: unless-stopped
     command: --default-authentication-plugin=mysql_native_password
-    mem_limit: 1g
-    cpus: 1
+    mem_limit: ${DB_MEM_LIMIT}
+    cpus: ${DB_CPUS}
+
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: gantelella
-      MYSQL_USER: gantelella_user
-      MYSQL_PASSWORD: gantelella_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
     ports:
-      - "3306:3306"          # opcional: exponer para conectarse con un cliente externo
+      - "${MYSQL_PORT}:3306"
+
     volumes:
-      - db_data:/var/lib/mysql          # persistencia de datos
-      - ./backup.sql:/docker-entrypoint-initdb.d/backup.sql  # carga el schema al iniciar
+      - db_data:/var/lib/mysql
+      - ${BACKUP_SQL}:/docker-entrypoint-initdb.d/backup.sql
+
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uroot",
+          "-p${MYSQL_ROOT_PASSWORD}"
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ─── Aplicación Node.js ────────────────────────────────────────────
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: gantelella_app
+
+    container_name: ${APP_CONTAINER_NAME}
     restart: unless-stopped
+
     ports:
-      - "3000:3000"
+      - "${APP_PORT}:${NODE_PORT}"
+
     environment:
-      PORT: 3000
-      MYSQL_HOST: db              # nombre del servicio de BD en la red interna
-      MYSQL_USER: gantelella_user
-      MYSQL_PASSWORD: gantelella_pass
-      MYSQL_DATABASE: gantelella
+      PORT: ${NODE_PORT}
+      MYSQL_HOST: ${MYSQL_HOST}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+
     depends_on:
       db:
-        condition: service_healthy  # espera a que MySQL esté listo antes de arrancar
+        condition: service_healthy
+
     volumes:
-      - .:/app                    # hot-reload: cambios en código se reflejan de inmediato
-      - /app/node_modules         # evita que el volumen anterior sobreescriba node_modules
+      - ${APP_SOURCE_DIR}:/app
+      - /app/node_modules
 
 volumes:
   db_data:
